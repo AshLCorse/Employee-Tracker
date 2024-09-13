@@ -144,8 +144,8 @@ function addRole() {
 }
 
 function addEmployee() {
-  let roles = [];
-  let managers = [];
+  let roles = [0];
+  let managers = [0];
   db.query("SELECT * FROM roles", (err, { rows }) => {
     roles = rows.map(({ role_id, role_name }) => ({
       name: role_name,
@@ -181,143 +181,75 @@ function addEmployee() {
       {
         type: "list",
         name: "manager",
-        message:
-          "Choose the Manager of the Employee you are adding (leave blank for none):",
+        message: "Choose the Manager of the Employee you are adding:",
         choices: managers, // Populate this with all managers
       },
-    ]).then((res) => {
-      console.log(res);
-      db.query(
-        `INSERT INTO employee_data (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)`,
-        [res.first_name, res.last_name, res.role_name]
-      );
-      console.log(
-        "Successfully added employee:",
-        res.first_name,
-        res.last_name,
-        "With role:",
-        res.role_name,
-        "and Manager:",
-        res.manager_name
-      );
-    });
-    // .then(() => {
-    //   db.query("SELECT * FROM employee_data", (err, { rows }) => {
-    //     if ((role_id = 1)) {
-    //       let managers = rows.map(({ employee_id, employee_name }) => ({
-    //         manager_name: employee_name,
-    //         manager_value: employee_id,
-    //       }));
-    //       prompt([
-    //         {
-    //           type: "list",
-    //           name: "manager",
-    //           message:
-    //             "Choose the Manager of the Employee you are adding (leave blank for none):",
-    //           choices: managers, // Populate this with all managers
-    //         },
-    //       ]).then((res) => {
-    //         console.log(res);
-    //         db.query(
-    //           `UPDATE employee_data SET manager_id = $1 WHERE employee_id = ${employee_id}`,
-    //           [res.manager_name, res.employee_id]
-    //         ).then(() => {
-    //           console.log(
-    //             "Successfully set employee:",
-    //             res.employee_id,
-    //             "'s manager to:",
-    //             res.manager_name
-    //           );
-    //           init();
-    //         });
-    //       });
-    //     } else {
-    //       init();
-    //     }
-    //   });
-    // });
+    ])
+      .then((res) => {
+        console.log(res);
+        db.query(
+          `INSERT INTO employee_data (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)`,
+          [res.first_name, res.last_name, res.role_name, res.manager]
+        ).then(() => {
+          console.log(
+            "Successfully added employee:",
+            res.first_name,
+            res.last_name,
+            "With role:",
+            res.role_name,
+            "and Manager:",
+            res.manager
+          );
+          init();
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   });
 }
 
 function updateEmployeeRole() {
-  db.query(
-    "SELECT * FROM employee_data",
-    "SELECT * FROM roles",
-    (err, { rows }) => {
-      let employees = rows.map(({ employee_id, employee_name }) => ({
-        name: employee_name,
-        value: employee_id,
-      }));
-      let roles = rows.map(({ role_id, role_name }) => ({
-        name: role_name,
-        value: role_id,
-      }));
-      prompt([
-        {
-          type: "list",
-          name: "employee_Id",
-          message: "Enter the Id of the Employee to update:",
-          choices: employees, // Populate this with all employee ids
-        },
-        {
-          type: "list",
-          name: "role_name",
-          message:
-            "Enter the name of the new Role this Employee has achieved to update:",
-          choices: roles, // Populate this with all role names
-        },
-      ])
-        .then((res) => {
-          console.log(res);
-          db.query(
-            `UPDATE employee_data SET role = $1 WHERE employee_id = $3`,
-            [res.employee_id, res.role_name]
-          );
-        })
-        .then(() => {
-          console.log(
-            "Successfully updated Employee:",
-            res.employee_name,
-            "To role:",
-            res.role_name
-          );
-          db.query(
-            "SELECT * FROM employee_data WHERE role_id = 1",
-            (err, { rows }) => {
-              if (rows) {
-                let managers = rows.map(({ employee_id, employee_name }) => ({
-                  manager_name: employee_name,
-                  manager_value: employee_id,
-                }));
-                prompt([
-                  {
-                    type: "list",
-                    name: "manager_Id",
-                    message:
-                      "Choose the Employee's new manager to update (leave blank for none):",
-                    choices: managers, // Populate this with all managers
-                  },
-                ]).then((res) => {
-                  console.log(res);
-                  db.query(
-                    `UPDATE employee_data SET manager_id = $1 WHERE employee_id = ${employee_id}`,
-                    [res.manager_name, res.employee_id]
-                  ).then(() => {
-                    console.log(
-                      "Successfully updated employee:",
-                      res.employee_id,
-                      "'s manager to:",
-                      res.manager_name
-                    );
-                    init();
-                  });
-                });
-              } else {
-                init();
-              }
-            }
-          );
-        });
-    }
-  );
+  let employees = [];
+  let roles = [];
+  db.query("SELECT * FROM employee_data", (err, { rows }) => {
+    employees = rows.map(({ employee_id, employee_name }) => ({
+      name: employee_name,
+      value: employee_id,
+    }));
+  });
+  db.query("SELECT * FROM roles", (err, { rows }) => {
+    roles = rows.map(({ role_id, role_name }) => ({
+      name: role_name,
+      value: role_id,
+    }));
+    prompt([
+      {
+        type: "list",
+        name: "employee_Id",
+        message: "Enter the Id of the Employee to update:",
+        choices: employees, // Populate this with all employee ids
+      },
+      {
+        type: "list",
+        name: "role_name",
+        message:
+          "Enter the name of the new Role this Employee has achieved to update:",
+        choices: roles, // Populate this with all role names
+      },
+    ]).then((res) => {
+      console.log(res);
+      db.query(`UPDATE employee_data SET role_id = $2 WHERE employee_id = $1`, [
+        res.employee_id,
+        res.role_name,
+      ]);
+      console.log(
+        "Successfully updated Employee:",
+        res.employee_name,
+        "To role:",
+        res.role_name
+      );
+    });
+  });
+  init();
 }
